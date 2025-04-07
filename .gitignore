@@ -1,0 +1,25 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# IDEs
+.vscode/
+.idea/
+
+# System
+.DS_Store
+
+# Logs
+*.log
+
+# YOLO and model files
+runs/
+*.pt
+
+# Datasets and Videos
+train/
+test/
+valid/
+*.avi
