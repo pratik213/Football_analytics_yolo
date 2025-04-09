@@ -1,5 +1,6 @@
 from ultralytics import YOLO
 import supervision as sv
+import pickle
 
 class Tracker:
     def __init__(self,model_path):
@@ -15,7 +16,7 @@ class Tracker:
             break
         return detections
     
-    def get_object_tracks(self,frames):
+    def get_object_tracks(self,frames,read_from_stub=False,stub_path=None):
         detections=self.detect_frames(frames)
 
         tracks={
@@ -56,6 +57,14 @@ class Tracker:
 
             for frame_detection in detection_supervision:
                 bbox = frame_detection[0].tolist()
-                
+                cls_id = frame_detection[3]
+
+                if cls_id==cls_names_inv["ball"]:
+                    tracks["players"][frame_num][1] = {"bbox": bbox}
+
+        if stub_path is not None:
+            with open(stub_path, 'wb') as f:
+                pickle.dump(tracks, f)
+
                     
-            print(detection_with_tracks)
+        return tracks
