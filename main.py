@@ -17,19 +17,19 @@ def main():
                                         stub_path='stubs/track_stubs.pkl')
     
     # save cropped image of player
-    for track_id,player in tracks['players'][0].items():
-        bbox=player['bbox']
-        frame=video_frames[0]
+    # for track_id,player in tracks['players'][0].items():
+    #     bbox=player['bbox']
+    #     frame=video_frames[0]
 
-        # crop bbox from frame
-        # bbox = [x1, y1, x2, y2]  rows    = y1 to y2  (height)
-        # columns = x1 to x2  (width)
+    #     # crop bbox from frame
+    #     # bbox = [x1, y1, x2, y2]  rows    = y1 to y2  (height)
+    #     # columns = x1 to x2  (width)
 
-        cropped_image=frame[int(bbox[1]):int(bbox[3]),int(bbox[0]):int(bbox[2])]
+    #     cropped_image=frame[int(bbox[1]):int(bbox[3]),int(bbox[0]):int(bbox[2])]
 
-        # save the cropped image
-        cv2.imwrite(f'output_videos/cropped_img.jpg',cropped_image)
-        break
+    #     # save the cropped image
+    #     cv2.imwrite(f'output_videos/cropped_img.jpg',cropped_image)
+    #     break
 
     
 
