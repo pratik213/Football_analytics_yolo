@@ -1,6 +1,7 @@
 from ultralytics import YOLO
 import supervision as sv
 import pickle
+import numpy as np
 import os
 import cv2
 import sys
@@ -19,6 +20,7 @@ class Tracker:
         detections=[]
         for i in range(0,len(frames),batch_size):
             detections_batch=self.model.predict(frames[i:i+batch_size],conf=0.1)
+            print(f"Batch {i//batch_size} detected classes: {[d.names for d in detections]}")  # Debug
             detections += detections_batch
         return detections
     
@@ -41,9 +43,12 @@ class Tracker:
             "ball": [],
             "referees": [],
         }
+
+        
         
         for frame_num, detection in enumerate(detections):
             cls_names=detection.names
+        
             cls_names_inv = {v:k for k,v in cls_names.items()}
 
             # Convert to supervision detection format
@@ -56,6 +61,9 @@ class Tracker:
 
             # Track Objects
             detection_with_tracks = self.tracker.update_with_detections(detection_supervision)
+
+            
+
 
             tracks["players"].append({})
             tracks["referees"].append({})
@@ -72,12 +80,20 @@ class Tracker:
                 if cls_id==cls_names_inv["referee"]:
                     tracks["referees"][frame_num][track_id] = {"bbox": bbox}
 
-            for frame_detection in detection_supervision:
-                bbox = frame_detection[0].tolist()
-                cls_id = frame_detection[3]
+
+                
 
                 if cls_id==cls_names_inv["ball"]:
-                    tracks["players"][frame_num][1] = {"bbox": bbox}
+                    tracks["ball"][frame_num][track_id] = {"bbox": bbox}
+
+
+                
+                
+                
+
+            
+
+                
 
         if stub_path is not None:
             with open(stub_path, 'wb') as f:
@@ -103,7 +119,45 @@ class Tracker:
             lineType=cv2.LINE_4,            
         )
 
+        rectangle_width=40
+        rectangle_height=20
+        x1_rect = x_center - rectangle_width // 2
+        x2_rect = x_center + rectangle_width // 2
+        y1_rect = (y2 - rectangle_height // 2)+15
+        y2_rect = (y2 + rectangle_height // 2)-15
+
+        x1_text=x1_rect+12
+        if track_id is not None:
+            cv2.rectangle(frame,(int(x1_rect),int( y1_rect)), (int(x2_rect), int(y2_rect)), color, cv2.FILLED)
+            x1_text -=10
+            if track_id>99:
+                x1_text=x1_rect+5
+
+            cv2.putText(
+                frame,
+                f"{track_id}",
+                (int(x1_text),int(y1_rect+15)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 0, 0),
+                2
+            )
+
+
         return frame
+
+    def draw_triangle(self,frame,bbox,color):
+        y=int(bbox[1])
+        x,_=get_center_of_bbox(bbox)
+        triangle_points=np.array([
+            [x,y],
+            [x-10,y-20],
+            [x+10,y-20],
+        ])
+        cv2.drawContours(frame,[triangle_points],0,color,cv2.FILLED)
+        cv2.drawContours(frame,[triangle_points],0,(0,0,0),2)
+        return frame
+         
 
 
     def draw_annotations(self,video_frames,tracks):
@@ -114,6 +168,8 @@ class Tracker:
             referee_dict=tracks["referees"][frame_num]
             ball_dict=tracks["ball"][frame_num]
 
+            
+
             # Draw Players
             for track_id, player in player_dict.items():
                 frame=self.draw_ellipse(frame,player["bbox"],(0,0,255),track_id)
@@ -121,7 +177,12 @@ class Tracker:
 
             # Draw Referees
             for track_id, referee in referee_dict.items():
-                frame=self.draw_ellipse(frame,referee["bbox"],(0,0,255),track_id)
+                frame=self.draw_ellipse(frame,referee["bbox"],(0,255,255),track_id)
+
+            # Draw ball
+            for track_id,ball in ball_dict.items():
+                frame=self.draw_triangle(frame,ball["bbox"],(0,255,0))
 
             output_video_frames.append(frame)
+
         return output_video_frames
