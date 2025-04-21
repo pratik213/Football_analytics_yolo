@@ -4,6 +4,7 @@ from sklearn.cluster import KMeans
 class TeamAssigner:
     def __init__(self):
         self.team_color={}
+        self.player_team_dict={}
 
 
     def get_clustering_model(self,image):
@@ -50,3 +51,16 @@ class TeamAssigner:
 
         self.team_color['1']=kmeans.cluster_centers_[0]
         self.team_color['2']=kmeans.cluster_centers_[1]
+
+
+    def get_player_team(self,frames,player_bbox,player_id):
+        if player_id in self.player_team_dict:
+            return self.player_team_dict[player_id]
+        
+        player_color=self.get_player_color(frames,player_bbox)
+        team_id=self.kmeans.predict(player_color.reshape(1,-1))[0]
+        team_id=team_id+1
+
+        self.player_team_dict[player_id]=team_id
+
+        return team_id
