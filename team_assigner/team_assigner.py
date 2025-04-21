@@ -3,7 +3,7 @@ from sklearn.cluster import KMeans
 
 class TeamAssigner:
     def __init__(self):
-        pass
+        self.team_color={}
 
 
     def get_clustering_model(self,image):
@@ -33,10 +33,20 @@ class TeamAssigner:
         non_player_cluster=max(set(corner_cluster),key=corner_cluster.count)
         player_cluster=1-non_player_cluster
 
+        player_color=kmeans.cluster_centers_[player_cluster]
+
+        return player_color
+
 
     def assign_team_color(self,frame,player_detections):
-        player_colot=[]
+        player_colors=[]
         for _,player_detection in player_detections.items():
             bbox=player_detections['bbox']
             player_color=self.get_player_color(frame,bbox)
-            player_colot.append(player_color)
+            player_colot.append(player_colors)
+
+        kmeans=kmeans(n_clusters=2,init="k-means++",n_init=1).fit(player_colors)
+        self.kmeans=kmeans
+
+        self.team_color['1']=kmeans.cluster_centers_[0]
+        self.team_color['2']=kmeans.cluster_centers_[1]
