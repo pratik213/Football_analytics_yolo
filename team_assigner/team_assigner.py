@@ -3,7 +3,7 @@ from sklearn.cluster import KMeans
 
 class TeamAssigner:
     def __init__(self):
-        self.team_color={}
+        self.team_colors={}
         self.player_team_dict={}
 
 
@@ -18,7 +18,7 @@ class TeamAssigner:
 
     def get_player_color(self,frame,bbox):
         image=frame[int(bbox[1]):int(bbox[3]),int(bbox[0]):int(bbox[2])]
-        top_half_image=image[0::int(image.shape[0]/2),:]
+        top_half_image=image[0:int(image.shape[0]/2),:]
 
         # Get Clustering model
         kmeans=self.get_clustering_model(top_half_image)
@@ -42,22 +42,22 @@ class TeamAssigner:
     def assign_team_color(self,frame,player_detections):
         player_colors=[]
         for _,player_detection in player_detections.items():
-            bbox=player_detections['bbox']
+            bbox=player_detection["bbox"]
             player_color=self.get_player_color(frame,bbox)
-            player_colot.append(player_colors)
+            player_colors.append(player_color)
 
-        kmeans=kmeans(n_clusters=2,init="k-means++",n_init=1).fit(player_colors)
+        kmeans=KMeans(n_clusters=2,init="k-means++",n_init=10).fit(player_colors)
         self.kmeans=kmeans
 
-        self.team_color['1']=kmeans.cluster_centers_[0]
-        self.team_color['2']=kmeans.cluster_centers_[1]
+        self.team_colors[1]=kmeans.cluster_centers_[0]
+        self.team_colors[2]=kmeans.cluster_centers_[1]
 
 
-    def get_player_team(self,frames,player_bbox,player_id):
+    def get_player_team(self,frame,player_bbox,player_id):
         if player_id in self.player_team_dict:
             return self.player_team_dict[player_id]
         
-        player_color=self.get_player_color(frames,player_bbox)
+        player_color=self.get_player_color(frame,player_bbox)
         team_id=self.kmeans.predict(player_color.reshape(1,-1))[0]
         team_id=team_id+1
 
