@@ -3,6 +3,9 @@ from trackers import Tracker
 import cv2
 from team_assigner import TeamAssigner
 from player_ball_assigner import PlayerBallAssigner
+from camera_movement_estimator import CameraMovementEstimator
+from view_transformer import ViewTransformer
+from speed_distance_estimator import Speed_DistanceEstimator
 
 
 def main():
@@ -19,10 +22,27 @@ def main():
                                        read_from_stub=True,
                                         stub_path='stubs/track_stubs.pkl')
     
+    # Get object positions
+    tracker.add_position_to_tracks(tracks)
+    
+    # cameraman estimator
+    camera_movement_estimator=CameraMovementEstimator(video_frames[0])
+    camera_movement_per_frame=camera_movement_estimator.get_camera_movement(video_frames,read_from_stub=True,stub_path='stubs/camera_movement_stub.pkl')
+    
+    camera_movement_estimator.add_adjust_position_to_tracks(tracks,camera_movement_per_frame)
+
+    # View Transformer
+    view_transformer=ViewTransformer()
+    view_transformer.add_transformed_position_to_tracks(tracks)
+
 
     # Interpolate ball position
 
     tracks['ball']=tracker.interpolate_ball_position(tracks['ball'])
+
+    # Speed and Distance Estimator
+    speed_distance_estimator=Speed_DistanceEstimator()
+    speed_distance_estimator.add_speed_distance_to_tracks(tracks)
     
     # Assign player to teams
     team_assigner=TeamAssigner()
@@ -66,8 +86,11 @@ def main():
     # Draw object tracks
     output_video_frames=tracker.draw_annotations(video_frames, tracks)
 
-    
+    # Draw camera movement
+    output_video_frames=camera_movement_estimator.draw_camera_movement(output_video_frames,camera_movement_per_frame)
 
+    # Draw speed and distance
+    speed_and_distance_estimator=speed_distance_estimator.draw_speed_distance(output_video_frames,tracks)
 
 
     # Save Video
